@@ -2,10 +2,8 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { Eye, EyeOff, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { trackEvent } from '@/lib/analytics'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -13,7 +11,6 @@ export default function LoginPage() {
   const [showPass, setShowPass] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const router = useRouter()
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -23,15 +20,13 @@ export default function LoginPage() {
     const supabase = createClient()
     const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
 
-    
-if (authError) {
-  setError(authError.message)
-  setLoading(false)
-  return
-}
+    if (authError) {
+      setError(authError.message)
+      setLoading(false)
+      return
+    }
 
-    await trackEvent('login', { method: 'email' })
-      window.location.href = '/dashboard'
+    window.location.href = '/dashboard'
   }
 
   return (
