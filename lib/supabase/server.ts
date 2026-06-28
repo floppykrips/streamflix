@@ -1,4 +1,4 @@
-import { createServerClient, type CookieMethods } from '@supabase/ssr'
+import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
 export function createClient() {
@@ -9,9 +9,9 @@ export function createClient() {
     {
       cookies: {
         getAll() { return cookieStore.getAll() },
-         setAll(cookiesToSet: Parameters<CookieMethods['setAll']>[0]) {
+        setAll(cookiesToSet: any) {
           try {
-            cookiesToSet.forEach(({ name, value, options }) =>
+            cookiesToSet.forEach(({ name, value, options }: any) =>
               cookieStore.set(name, value, options)
             )
           } catch {}
