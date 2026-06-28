@@ -9,12 +9,16 @@ export async function middleware(request: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        getAll() { return request.cookies.getAll() },
+        getAll() {
+          return request.cookies.getAll()
+        },
         setAll(cookiesToSet: { name: string; value: string; options?: any }[]) {
-          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
+          cookiesToSet.forEach(({ name, value }) =>
+            request.cookies.set(name, value)
+          )
           supabaseResponse = NextResponse.next({ request })
           cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
+            supabaseResponse.cookies.set(name, value, options ?? {})
           )
         },
       },
@@ -24,24 +28,19 @@ export async function middleware(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   const pathname = request.nextUrl.pathname
 
-  if (!user && (pathname.startsWith('/dashboard') || pathname.startsWith('/watch') || pathname.startsWith('/admin'))) {
+  if (!user && (
+    pathname.startsWith('/dashboard') ||
+    pathname.startsWith('/watch') ||
+    pathname.startsWith('/admin')
+  )) {
     return NextResponse.redirect(new URL('/auth/login', request.url))
   }
 
-  if (user && (pathname.startsWith('/auth/login') || pathname.startsWith('/auth/register'))) {
+  if (user && (
+    pathname === '/auth/login' ||
+    pathname === '/auth/register'
+  )) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
-  }
-
-  if (user && pathname.startsWith('/admin')) {
-    const { data: profile } = await supabase
-      .from('users')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-
-    if (!profile || profile.role !== 'admin') {
-      return NextResponse.redirect(new URL('/dashboard', request.url))
-    }
   }
 
   return supabaseResponse
