@@ -10,7 +10,7 @@ export async function middleware(request: NextRequest) {
     {
       cookies: {
         getAll() { return request.cookies.getAll() },
-        setAll(cookiesToSet: any) {
+        setAll(cookiesToSet: { name: string; value: string; options?: any }[]) {
           cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
           supabaseResponse = NextResponse.next({ request })
           cookiesToSet.forEach(({ name, value, options }) =>
@@ -24,17 +24,14 @@ export async function middleware(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   const pathname = request.nextUrl.pathname
 
-  // Redirect unauthenticated users from protected routes
   if (!user && (pathname.startsWith('/dashboard') || pathname.startsWith('/watch') || pathname.startsWith('/admin'))) {
     return NextResponse.redirect(new URL('/auth/login', request.url))
   }
 
-  // Redirect authenticated users away from auth pages
   if (user && (pathname.startsWith('/auth/login') || pathname.startsWith('/auth/register'))) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
-  // Check admin role for /admin routes
   if (user && pathname.startsWith('/admin')) {
     const { data: profile } = await supabase
       .from('users')
