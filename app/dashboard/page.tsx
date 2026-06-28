@@ -1,107 +1,60 @@
 import { createClient } from '@/lib/supabase/server'
-import { MovieCard } from '@/components/ui/MovieCard'
-import { FeaturedBanner } from '@/components/ui/FeaturedBanner'
-import type { Movie } from '@/types'
+import { Users, Film, Eye, TrendingUp } from 'lucide-react'
 
-interface DashboardPageProps {
-  searchParams: { q?: string; genre?: string }
-}
-
-export default async function DashboardPage({ searchParams }: DashboardPageProps) {
+export default async function AdminDashboardPage() {
   const supabase = createClient()
 
-  let query = supabase.from('movies').select('*').order('created_at', { ascending: false })
-
-  if (searchParams.q) {
-    query = query.ilike('title', `%${searchParams.q}%`)
-  }
-  if (searchParams.genre) {
-    query = query.contains('genre', [searchParams.genre])
-  }
-
-  const { data: movies } = await query.limit(50)
-  const { data: featured } = await supabase
-    .from('movies')
+  const { count: totalUsers } = await supabase
+    .from('users').select('*', { count: 'exact', head: true })
+  
+  const { count: totalMovies } = await supabase
+    .from('movies').select('*', { count: 'exact', head: true })
+  
+  const { data: recentEvents } = await supabase
+    .from('analytics_events')
     .select('*')
-    .eq('is_featured', true)
-    .limit(1)
-    .single()
+    .order('created_at', { ascending: false })
+    .limit(10)
 
-  const allMovies: Movie[] = movies || []
-  const featuredMovie: Movie | null = featured || allMovies[0] || null
-
-  const genres = ['Action', 'Drama', 'Horror', 'Comedy', 'Romance', 'Thriller', 'Sci-Fi', 'Animation']
-  const byGenre = genres.map(genre => ({
-    genre,
-    movies: allMovies.filter(m => m.genre?.includes(genre.toLowerCase())),
-  })).filter(g => g.movies.length > 0)
+  const stats = [
+    { label: 'Total Pengguna', value: totalUsers || 0, icon: Users, color: 'text-blue-500', bg: 'bg-blue-500/10' },
+    { label: 'Total Film', value: totalMovies || 0, icon: Film, color: 'text-brand', bg: 'bg-brand/10' },
+  ]
 
   return (
-    <div className="pb-12">
-      {/* Featured banner - only on homepage without filters */}
-      {!searchParams.q && !searchParams.genre && featuredMovie && (
-        <FeaturedBanner movie={featuredMovie} />
-      )}
+    <div>
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold">Dashboard Admin</h1>
+        <p className="text-[rgb(var(--text-muted))] text-sm mt-1">Monitor aktivitas platform</p>
+      </div>
 
-      <div className="px-6 lg:px-12">
-        {/* Search results */}
-        {searchParams.q && (
-          <div className="mb-8">
-            <h2 className="text-xl font-bold mb-1">Hasil pencarian: <span className="text-brand">"{searchParams.q}"</span></h2>
-            <p className="text-sm text-[rgb(var(--text-muted))] mb-4">{allMovies.length} film ditemukan</p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-              {allMovies.map(movie => <MovieCard key={movie.id} movie={movie} />)}
+      <div className="grid grid-cols-2 gap-4 mb-8">
+        {stats.map(({ label, value, icon: Icon, color, bg }) => (
+          <div key={label} className="card p-5">
+            <div className={`w-10 h-10 rounded-lg ${bg} flex items-center justify-center mb-3`}>
+              <Icon size={20} className={color} />
             </div>
-            {allMovies.length === 0 && (
-              <div className="text-center py-16 text-[rgb(var(--text-muted))]">
-                <p className="text-4xl mb-3">🎬</p>
-                <p className="font-medium">Tidak ada film yang ditemukan</p>
-                <p className="text-sm">Coba kata kunci lain</p>
-              </div>
-            )}
+            <p className="text-2xl font-black">{value}</p>
+            <p className="text-sm text-[rgb(var(--text-muted))] mt-0.5">{label}</p>
           </div>
-        )}
+        ))}
+      </div>
 
-        {/* Genre filter results */}
-        {searchParams.genre && !searchParams.q && (
-          <div className="mb-8 pt-6">
-            <h2 className="text-xl font-bold mb-4 capitalize">Genre: {searchParams.genre}</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-              {allMovies.map(movie => <MovieCard key={movie.id} movie={movie} />)}
+      <div className="card p-6">
+        <h2 className="font-bold mb-4">Aktivitas Terbaru</h2>
+        <div className="space-y-2">
+          {recentEvents?.map((event: any) => (
+            <div key={event.id} className="flex items-center gap-3 py-2 border-b border-[rgb(var(--border))] last:border-0">
+              <p className="text-sm">{event.event_type}</p>
+              <span className="text-xs text-[rgb(var(--text-muted))] ml-auto">
+                {new Date(event.created_at).toLocaleTimeString('id-ID')}
+              </span>
             </div>
-          </div>
-        )}
-
-        {/* All movies by genre */}
-        {!searchParams.q && !searchParams.genre && (
-          <>
-            {/* All movies row */}
-            <section className="mb-8 mt-8">
-              <h2 className="text-lg font-bold mb-3">🎬 Semua Film</h2>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-                {allMovies.slice(0, 12).map(movie => <MovieCard key={movie.id} movie={movie} />)}
-              </div>
-            </section>
-
-            {/* By genre */}
-            {byGenre.map(({ genre, movies: gMovies }) => (
-              <section key={genre} className="mb-8">
-                <h2 className="text-lg font-bold mb-3">{genre}</h2>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-                  {gMovies.slice(0, 6).map(movie => <MovieCard key={movie.id} movie={movie} />)}
-                </div>
-              </section>
-            ))}
-
-            {allMovies.length === 0 && (
-              <div className="text-center py-24 text-[rgb(var(--text-muted))]">
-                <p className="text-5xl mb-4">🎬</p>
-                <p className="text-lg font-medium mb-1">Belum ada film</p>
-                <p className="text-sm">Admin belum menambahkan film. Cek lagi nanti!</p>
-              </div>
-            )}
-          </>
-        )}
+          ))}
+          {!recentEvents?.length && (
+            <p className="text-sm text-[rgb(var(--text-muted))] text-center py-8">Belum ada aktivitas</p>
+          )}
+        </div>
       </div>
     </div>
   )
