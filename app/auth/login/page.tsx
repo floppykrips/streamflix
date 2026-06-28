@@ -30,8 +30,7 @@ export default function LoginPage() {
     }
 
     await trackEvent('login', { method: 'email' })
-    router.push('/dashboard')
-    router.refresh()
+      window.location.href = '/dashboard'
   }
 
   return (
