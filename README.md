@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 🎬 StreamFlix
 
 Platform streaming film buatan sendiri dengan Next.js 14, Supabase, dan Vercel.
@@ -128,3 +129,7 @@ streamflix/
 | Video Player | react-player |
 | Charts | Recharts |
 | Hosting | Vercel |
+=======
+# streamflix
+final bgt dah
+>>>>>>> 78f4facab9941adc583a57aa1d3012b62e1817bd

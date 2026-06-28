@@ -53,7 +53,7 @@
   }
 
   .movie-card {
-    @apply relative overflow-hidden rounded-lg cursor-pointer group
+    @apply relative overflow-hidden rounded-lg cursor-pointer
            transition-transform duration-200 hover:scale-105 hover:z-10;
   }
 
